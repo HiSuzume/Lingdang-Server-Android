@@ -66,6 +66,7 @@ public class HttpServer extends NanoHTTPD {
                     StringBuilder sb = new StringBuilder("文件列表:<br>");
                     sb.append("<!DOCTYPE html><html><head></head><body>");
                     File[] ls = f.listFiles();
+                    sb.append("<a href=\"../\">../</a><br>");
                     for (File d : ls) {
                         if (d.isDirectory())
                             sb.append("<a href=\"" + d.getName() + "/\">" + d.getName() + "/</a><br>");
@@ -168,8 +169,24 @@ public class HttpServer extends NanoHTTPD {
             case".css":
                 m = "text/css";
                 break;
-            case ".lua":
+            case".lua":
                 m = "executable/lua";
+                break;
+            case".mp3":
+            case".m4a":
+                m = "audio/mpeg";
+                break;
+            case".mp4":
+                m = "video/mp4";
+                break;
+            case".mpeg":
+                m = "video/mpeg";
+                break;
+            case".ts":
+                m = "video/MP2T";
+                break;
+            case".m3u8":
+                m = "application/x-mpegURL";
                 break;
             default:
                 m = "application/octet-stream";
