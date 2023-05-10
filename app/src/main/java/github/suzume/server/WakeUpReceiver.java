@@ -14,7 +14,7 @@ public class WakeUpReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         
-        ServerService.start(context);
+        ServerService.start(context,ServerService.class);
         
     }
     

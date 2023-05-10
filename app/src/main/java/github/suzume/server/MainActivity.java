@@ -70,11 +70,11 @@ public class MainActivity extends Activity {
                 @Override
                 public void onCallback(SettingsUtil s, String c) {
                     s.set("http_port", c);
-                    toast("记得让铃芽回来哦~");
+                    toast("重启后生效哦~");
                 }
             });
 
-        root_httpconfig_port.data = "默认8080，80在安卓无法使用";
+        root_httpconfig_port.data = "默认8080，Android和谐了80端口";
 
         final SettingsUtil.Setting root_httpconfig_dir = new SettingsUtil.Setting("http_dir", "Http文件路径", SettingsUtil.Setting.Type.EDIT, 
             new SettingsUtil.Setting.Callback(){
@@ -83,12 +83,24 @@ public class MainActivity extends Activity {
                 @Override
                 public void onCallback(SettingsUtil s, String c) {
                     s.set("http_dir", c);
-                    toast("记得让铃芽回来哦~");
+                    toast("重启后生效哦~");
                 }
             });
 
         root_httpconfig_dir.data = "不以\"/\"结尾的文件夹路径";
 
+        final SettingsUtil.Setting root_httpconfig_filelist = new SettingsUtil.Setting("http_filelist", "Http文件列表", SettingsUtil.Setting.Type.SWITCH, 
+            new SettingsUtil.Setting.Callback(){
+                public void onCallback(SettingsUtil s) {}
+                public void onCallback(SettingsUtil s, boolean b) {
+                    s.set("http_filelist",b == true ? "真" : "");
+                    toast("重启后生效哦~");
+                }
+                public void onCallback(SettingsUtil s, String c) {}
+            });
+
+        root_httpconfig_filelist.data = "如果你的设备有很重要的文件，一定要慎重打开哦!";
+        
         final SettingsUtil.Setting root_httpconfig = new SettingsUtil.Setting("", "Http配置", SettingsUtil.Setting.Type.CHOICE, 
             new SettingsUtil.Setting.Callback(){
                 public void onCallback(SettingsUtil s) {}
@@ -96,11 +108,14 @@ public class MainActivity extends Activity {
                 @Override
                 public void onCallback(SettingsUtil s, String c) {
                     switch (c) {
-                        case "端口":
+                        case "服务端口":
                             s.openSettingsDialog(root_httpconfig_port, ecb);
                             break;
                         case "文件路径":
                             s.openSettingsDialog(root_httpconfig_dir, ecb);
+                            break;
+                        case "文件列表":
+                            s.openSettingsDialog(root_httpconfig_filelist, ecb);
                             break;
                     }
                 }
@@ -108,10 +123,12 @@ public class MainActivity extends Activity {
 
         root_httpconfig_port.parent = root_httpconfig;
         root_httpconfig_dir.parent = root_httpconfig;
+        root_httpconfig_filelist.parent = root_httpconfig;
 
         root_httpconfig.data = new String[]{
-            "端口",
+            "服务端口",
             "文件路径",
+            "文件列表",
         };
 
         final SettingsUtil.Setting root = new SettingsUtil.Setting("", "面板", SettingsUtil.Setting.Type.CHOICE, 
@@ -136,7 +153,7 @@ public class MainActivity extends Activity {
 
         AlertDialog.Builder b = new AlertDialog.Builder(this);
         b.setTitle("面板")
-            .setMessage("若通知栏显示了通知，那么铃芽已经出发啦~\n\n点击空白处退出面板!")
+            .setMessage("若通知栏显示了通知，那么已经启动啦~\n\n点击空白处退出面板!")
             .setOnCancelListener(new AlertDialog.OnCancelListener(){
                 @Override
                 public void onCancel(DialogInterface dialog) {
@@ -146,16 +163,16 @@ public class MainActivity extends Activity {
             .setPositiveButton("去吧", new AlertDialog.OnClickListener(){
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    toast("我出发啦!");
+                    toast("行ってきます!");
                     sd.set("开关", "开");
-                    ServerService.start(MainActivity.this);
+                    ServerService.start(MainActivity.this,ServerService.class);
                     showMe();
                 }
             })
             .setNegativeButton("来吧", new AlertDialog.OnClickListener(){
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    toast("我回来啦!");
+                    toast("欢迎回来!");
                     sd.set("开关", "关");
                     ServerService.stop();
                     showMe();

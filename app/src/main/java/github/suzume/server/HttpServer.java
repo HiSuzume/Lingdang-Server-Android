@@ -11,12 +11,13 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
+import org.luaj.vm2.lib.jse.JavaPackage;
 
 
 /**
  * @Author 铃芽
  * @Date 2023/04/29 16:22
- * @Describe Http 服务器
+ * @Describe Http 服务器实现类
  */
 public class HttpServer extends NanoHTTPD {
     public String hdir;
@@ -28,6 +29,8 @@ public class HttpServer extends NanoHTTPD {
         "index.htm",
         "index.lua",
     };
+
+    private boolean fileListEnabled;
 
     public HttpServer(int port, String d) {
         super(port);
@@ -62,9 +65,11 @@ public class HttpServer extends NanoHTTPD {
             InputStream is = Util.open(f);
             if (is == null) {
                 f = new File(hdir + s.getUri());
-                if (f.isDirectory()) {
-                    StringBuilder sb = new StringBuilder("文件列表:<br>");
-                    sb.append("<!DOCTYPE html><html><head></head><body>");
+                if (f.isDirectory() && fileListEnabled) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("<!DOCTYPE html><html><head>");
+                    sb.append("<meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no' /><meta name='renderer' content='webkit' /><meta name='force-rendering' content='webkit' /><meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1' />");
+                    sb.append("</head><body>文件列表:<br>");
                     File[] ls = f.listFiles();
                     sb.append("<a href=\"../\">../</a><br>");
                     for (File d : ls) {
@@ -76,7 +81,8 @@ public class HttpServer extends NanoHTTPD {
                     sb.append("</body></html>");
                     return newFixedLengthResponse(Response.Status.OK, MIME_HTML, sb.toString());
                 }
-                return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "404 Not Found");
+                return super.serve(s);
+                //return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "404 Not Found.");
             }
 
             String mine = getMineType(f.toString());
@@ -85,7 +91,7 @@ public class HttpServer extends NanoHTTPD {
                 /*int hash = f.hashCode();
                  Globals g = g_map.get(hash);
                  if (g == null) {*/
-                Globals g = MitsuhaLua.newInstance();
+                final Globals g = MitsuhaLua.newInstance();
                 /*g_map.put(hash, g);
                  }*/
 
@@ -106,13 +112,25 @@ public class HttpServer extends NanoHTTPD {
                         }
                     });
 
+                g.set("jpackage", new OneArgFunction(){
+                        @Override
+                        public LuaValue call(LuaValue arg) {
+                            JavaPackage jp = new JavaPackage(arg.checkjstring());
+                            g.set(arg.checkjstring(), jp);
+                            return jp;
+                        }
+                    });
+
                 g.jset("input", s);
+
+                g.jset("output", htm);
 
                 g.loadfile(f.toString()).jcall();
 
                 return newFixedLengthResponse(Response.Status.OK, mine, htm.toString().trim());
             }
-            return newChunkedResponse(Response.Status.OK, mine, is);
+
+            return newFixedLengthResponse(Response.Status.OK, mine, is, is.available());
         } catch (Throwable e) {
             StringBuilder eri = new StringBuilder();
 
@@ -141,6 +159,10 @@ public class HttpServer extends NanoHTTPD {
      return e.getMessage();
      }
      }*/
+
+    public void setFileListEnabled(boolean c) {
+        fileListEnabled = c;
+    }
 
     public static String getMineType(String f) {
         String n = f.substring(f.lastIndexOf("."));

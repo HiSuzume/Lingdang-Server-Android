@@ -126,7 +126,7 @@ public class SettingsUtil {
                             s.call(SettingsUtil.this, items[which]);
                         }
                     })
-                    .setNegativeButton("关闭", new AlertDialog.OnClickListener(){
+                    .setNegativeButton("算啦", new AlertDialog.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Setting p = s.parent;
@@ -145,7 +145,7 @@ public class SettingsUtil {
                 ab.setTitle(s.title)
                     .setView(hpet)
                     .setCancelable(false)
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener(){
+                    .setPositiveButton("保存", new DialogInterface.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface d, int w) {
                             s.call(SettingsUtil.this, hpet.getText().toString());
@@ -156,7 +156,7 @@ public class SettingsUtil {
                                 cb.onExit();
                         }
                     })
-                    .setNegativeButton("取消", new AlertDialog.OnClickListener(){
+                    .setNegativeButton("算啦", new AlertDialog.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Setting p = s.parent;
@@ -172,7 +172,7 @@ public class SettingsUtil {
                 ab.setTitle(s.title)
                     .setMessage((String) s.data)
                     .setCancelable(false)
-                    .setPositiveButton("去吧", new DialogInterface.OnClickListener(){
+                    .setPositiveButton("要啦!", new DialogInterface.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface d, int w) {
                             s.call(SettingsUtil.this, true);
@@ -183,7 +183,7 @@ public class SettingsUtil {
                                 cb.onExit();
                         }
                     })
-                    .setNegativeButton("回来吧", new AlertDialog.OnClickListener(){
+                    .setNegativeButton("不要!", new AlertDialog.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             s.call(SettingsUtil.this, false);
@@ -194,7 +194,7 @@ public class SettingsUtil {
                                 cb.onExit();
                         }
                     })
-                    .setNeutralButton("取消", new AlertDialog.OnClickListener(){
+                    .setNeutralButton("算啦", new AlertDialog.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Setting p = s.parent;
