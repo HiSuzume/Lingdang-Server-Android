@@ -12,6 +12,8 @@ import org.luaj.vm2.Varargs;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.jse.JavaPackage;
+import java.io.RandomAccessFile;
+import java.io.FileInputStream;
 
 
 /**
@@ -65,6 +67,7 @@ public class HttpServer extends NanoHTTPD {
             InputStream is = Util.open(f);
             if (is == null) {
                 f = new File(hdir + s.getUri());
+                //文件夹存在
                 if (f.isDirectory() && fileListEnabled) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("<!DOCTYPE html><html><head>");
@@ -81,22 +84,24 @@ public class HttpServer extends NanoHTTPD {
                     sb.append("</body></html>");
                     return newFixedLengthResponse(Response.Status.OK, MIME_HTML, sb.toString());
                 }
+                //文件(夹)不存在
                 return super.serve(s);
                 //return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "404 Not Found.");
             }
 
-            String mine = getMineType(f.toString());
-            if ("executable/lua".equals(mine)) {
-                mine = MIME_HTML;
+            //获取MIME
+            String mime = getMineType(f.toString());
+
+            //执行Lua
+            if ("executable/lua".equals(mime)) {
+                mime = MIME_HTML;
                 /*int hash = f.hashCode();
                  Globals g = g_map.get(hash);
                  if (g == null) {*/
                 final Globals g = MitsuhaLua.newInstance();
                 /*g_map.put(hash, g);
                  }*/
-
                 final StringBuilder htm = new StringBuilder();
-
                 g.set("print", new OneArgFunction(){
                         @Override
                         //public Varargs invoke(Varargs args){
@@ -111,7 +116,6 @@ public class HttpServer extends NanoHTTPD {
                             return null;
                         }
                     });
-
                 g.set("jpackage", new OneArgFunction(){
                         @Override
                         public LuaValue call(LuaValue arg) {
@@ -120,17 +124,52 @@ public class HttpServer extends NanoHTTPD {
                             return jp;
                         }
                     });
-
                 g.jset("input", s);
-
                 g.jset("output", htm);
 
-                g.loadfile(f.toString()).jcall();
+                Object re = g.loadfile(f.toString()).jcall();
 
-                return newFixedLengthResponse(Response.Status.OK, mine, htm.toString().trim());
+                if (re == null) {
+                    re = Response.Status.OK;
+                }
+
+                return newFixedLengthResponse((Response.Status) re, mime, htm.toString().trim());
             }
 
-            return newFixedLengthResponse(Response.Status.OK, mine, is, is.available());
+            //普通文件
+
+            String isRange = s.getHeaders().get("range");
+
+            //断点下载，主要用在音视频哦!
+            
+            //感谢 ChatGPT 提供思路
+            if (isRange != null) {
+                RandomAccessFile raf = new RandomAccessFile(f.toString(), "r");
+                // Client requested a specific range of the file.
+                long rangeStart = 0;
+                long rangeEnd = 0;
+                String[] rangeValues = isRange.substring("bytes=".length()).split("-");
+                try {
+                    rangeStart = Long.parseLong(rangeValues[0]);
+                    if (rangeValues.length > 1) {
+                        rangeEnd = Long.parseLong(rangeValues[1]);
+                    } else {
+                        rangeEnd = raf.length() - 1;
+                    }
+                } catch (NumberFormatException e) {}
+
+                //long newLength = rangeEnd - rangeStart + 1;
+                String responseRange = String.format("bytes %d-%d/%d", rangeStart, rangeEnd, raf.length());
+
+                Response response = newChunkedResponse(Response.Status.PARTIAL_CONTENT, mime, new FileInputStream(raf.getFD()));
+                //newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, mime, new FileInputStream(raf),newLength);
+                //response.addHeader("Content-Length", "" + newLength);
+                response.addHeader("Content-Range", responseRange);
+
+                return response;
+            }
+
+            return newFixedLengthResponse(Response.Status.OK, mime, is, is.available());
         } catch (Throwable e) {
             StringBuilder eri = new StringBuilder();
 
