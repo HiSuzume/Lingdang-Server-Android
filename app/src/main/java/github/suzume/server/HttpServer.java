@@ -124,16 +124,17 @@ public class HttpServer extends NanoHTTPD {
                             return jp;
                         }
                     });
+                g.jset("code", Response.Status.class);
                 g.jset("input", s);
                 g.jset("output", htm);
 
                 Object re = g.loadfile(f.toString()).jcall();
 
-                if (re == null) {
+                if (re instanceof Response.Status == false) {
                     re = Response.Status.OK;
                 }
 
-                return newFixedLengthResponse((Response.Status) re, mime, htm.toString().trim());
+                return newFixedLengthResponse((Response.Status) re, mime, htm.toString());
             }
 
             //普通文件
@@ -146,9 +147,9 @@ public class HttpServer extends NanoHTTPD {
             if (isRange != null) {
                 try {
                     //RandomAccessFile raf = new RandomAccessFile(f.toString(), "r");
-                    
+
                     FileInputStream fi = new FileInputStream(f);
-                    
+
                     // Client requested a specific range of the file.
                     long rangeStart = 0;
                     long rangeEnd = 0;
@@ -163,17 +164,17 @@ public class HttpServer extends NanoHTTPD {
                     } catch (NumberFormatException e) {}
 
                     fi.skip(rangeStart);
-                    
+
                     long newLength = rangeEnd - rangeStart + 1;
                     String responseRange = String.format("bytes %d-%d/%d", rangeStart, rangeEnd, f.length());
 
                     Response response =  /*newChunkedResponse(
-                    Response.Status.PARTIAL_CONTENT,
-                    mime,
-                    //new FileInputStream(raf.getFD())
-                    fi
-                    );*/
-                    newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, mime, fi, newLength);
+                         Response.Status.PARTIAL_CONTENT,
+                         mime,
+                         //new FileInputStream(raf.getFD())
+                         fi
+                         );*/
+                        newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, mime, fi, newLength);
                     response.addHeader("Content-Length", "" + newLength);
                     response.addHeader("Accept-Ranges", "bytes");
                     response.addHeader("Content-Range", responseRange);
