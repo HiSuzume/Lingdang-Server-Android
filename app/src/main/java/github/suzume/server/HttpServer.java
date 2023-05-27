@@ -141,33 +141,48 @@ public class HttpServer extends NanoHTTPD {
             String isRange = s.getHeaders().get("range");
 
             //断点下载，主要用在音视频哦!
-            
-            //感谢 ChatGPT 提供思路
+
+            //BUG太多了
             if (isRange != null) {
-                RandomAccessFile raf = new RandomAccessFile(f.toString(), "r");
-                // Client requested a specific range of the file.
-                long rangeStart = 0;
-                long rangeEnd = 0;
-                String[] rangeValues = isRange.substring("bytes=".length()).split("-");
                 try {
-                    rangeStart = Long.parseLong(rangeValues[0]);
-                    if (rangeValues.length > 1) {
-                        rangeEnd = Long.parseLong(rangeValues[1]);
-                    } else {
-                        rangeEnd = raf.length() - 1;
-                    }
-                } catch (NumberFormatException e) {}
+                    //RandomAccessFile raf = new RandomAccessFile(f.toString(), "r");
+                    
+                    FileInputStream fi = new FileInputStream(f);
+                    
+                    // Client requested a specific range of the file.
+                    long rangeStart = 0;
+                    long rangeEnd = 0;
+                    String[] rangeValues = isRange.substring("bytes=".length()).split("-");
+                    try {
+                        rangeStart = Long.parseLong(rangeValues[0]);
+                        if (rangeValues.length > 1) {
+                            rangeEnd = Long.parseLong(rangeValues[1]);
+                        } else {
+                            rangeEnd = f.length() - 1;
+                        }
+                    } catch (NumberFormatException e) {}
 
-                //long newLength = rangeEnd - rangeStart + 1;
-                String responseRange = String.format("bytes %d-%d/%d", rangeStart, rangeEnd, raf.length());
+                    fi.skip(rangeStart);
+                    
+                    long newLength = rangeEnd - rangeStart + 1;
+                    String responseRange = String.format("bytes %d-%d/%d", rangeStart, rangeEnd, f.length());
 
-                Response response = newChunkedResponse(Response.Status.PARTIAL_CONTENT, mime, new FileInputStream(raf.getFD()));
-                //newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, mime, new FileInputStream(raf),newLength);
-                //response.addHeader("Content-Length", "" + newLength);
-                response.addHeader("Content-Range", responseRange);
+                    Response response =  /*newChunkedResponse(
+                    Response.Status.PARTIAL_CONTENT,
+                    mime,
+                    //new FileInputStream(raf.getFD())
+                    fi
+                    );*/
+                    newFixedLengthResponse(Response.Status.PARTIAL_CONTENT, mime, fi, newLength);
+                    response.addHeader("Content-Length", "" + newLength);
+                    response.addHeader("Accept-Ranges", "bytes");
+                    response.addHeader("Content-Range", responseRange);
 
-                return response;
+                    return response;
+                } finally {}
             }
+
+            //真•普通文件
 
             return newFixedLengthResponse(Response.Status.OK, mime, is, is.available());
         } catch (Throwable e) {
