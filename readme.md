@@ -1,14 +1,11 @@
-## 铃铛
-#### 概述
-铃铛 是一个使用 NanoHTTPD ，运行在Android的轻量Http服务的实现哦!
-#### 背景
-想在手机上建站，并且想占用少且省电~~明明是找理由写BUG(bushi)~~
-#### 特点
+## 铃铛 Http服务 / Lingdang Http Server
+[English Readme(Not implemented well)](readme_en.md)
+* Android系统
 * 轻量
 * 无缓存
-* 持续运行(最保险:添白名单&关省电模式)
+* 持续运行(建议添白名单&关省电模式)
 * 执行 Lua
-* 断点传输(音视频OK)
+* 断点传输(测试中)
 #### 待实现
 * ~~PHP (我不会集成(大悲))~~
 * 合理的功能建议!
@@ -16,6 +13,4 @@
 * [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd)
 * LuaJ++
 #### 后记
-欢迎各位帮我找BUG~
-
-请各位大佬多多指教，谢谢！😘
+如果有什么问题，请各位大佬多多指教，谢谢！😘
